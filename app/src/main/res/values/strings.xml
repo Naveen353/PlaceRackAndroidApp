@@ -6,5 +6,5 @@
     <string name="app_name">PlaceRackAndroidApp</string>
     <string name="enable_gps">Enable GPS</string>
     <string name="permission_request">Please give permissions to access location</string>
-    <string name="latLong">Longitude: %.3f, Latitude: %.3f</string>
+    <string name="latLong">Longitude: %.6f, Latitude: %.6f</string>
 </resources>

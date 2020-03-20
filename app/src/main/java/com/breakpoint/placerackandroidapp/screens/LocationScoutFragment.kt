@@ -52,6 +52,8 @@ class LocationScoutFragment : Fragment(){
         application = requireNotNull(this.activity).application
         viewModelFactory = LocationScoutViewModelFactory(application)
 
+
+
         invokeLocationAction()
 
 
@@ -76,7 +78,7 @@ class LocationScoutFragment : Fragment(){
     private fun startLocationUpdate() {
         viewModel = ViewModelProviders.of(this,viewModelFactory).get(LocationScoutViewModel::class.java)
         binding.locationScoutViewModel = viewModel
-            viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
+        viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
             binding.locationString.text =  getString(R.string.latLong, it.longitude, it.latitude)
         })
     }

@@ -13,7 +13,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 
-class LocationScoutViewModel(application: Application) : AndroidViewModel(application){
+class LocationScoutViewModel(application: Application) : AndroidViewModel(application),LocationInterface{
 
     companion object {
         val locationRequest: LocationRequest = LocationRequest.create().apply {
@@ -25,6 +25,10 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
 
     private var fusedLocationClient: FusedLocationProviderClient
 
+    private lateinit var locationCallback: LocationCallback
+
+
+
     private val _getLatLng = MutableLiveData<LocationModel>()
     val getLatLng: LiveData<LocationModel>
         get() = _getLatLng
@@ -35,16 +39,31 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
 
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location : Location? ->
-                // Got last known location. In some rare situations this can be null.
                 if (location != null) {
                     setLocationData(location)
                     Log.i("LocationScoutViewModel",""+ location.latitude + ", " + location.longitude)
                 }
             }
+
+        initLocationCallback()
+        startLocationUpdates()
     }
 
+    private fun initLocationCallback(){
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                locationResult ?: return
+                for (location in locationResult.locations) {
+                    Log.d("location",locationResult.locations.toString())
+                    setLocationData(location)
+                }
+            }
+        }
+    }
+
+
     @SuppressLint("MissingPermission")
-    private fun startLocationUpdates() {
+    override fun startLocationUpdates() {
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
@@ -52,16 +71,9 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
         )
     }
 
-    private val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult?) {
-            locationResult ?: return
-            for (location in locationResult.locations) {
-                setLocationData(location)
-            }
-        }
-    }
 
-    private fun setLocationData(location: Location) {
+
+    override fun setLocationData(location: Location) {
         _getLatLng.value = LocationModel(
             longitude = location.longitude,
             latitude = location.latitude
@@ -71,5 +83,6 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
     override fun onCleared() {
         super.onCleared()
         Log.i("LocationScoutViewModel","LocationScoutViewModel destroyed")
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }
