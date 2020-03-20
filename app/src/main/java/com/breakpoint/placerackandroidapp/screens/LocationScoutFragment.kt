@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Breakpoint Software Inc.
+ */
+
 package com.breakpoint.placerackandroidapp.screens
 
 import android.Manifest
@@ -47,21 +51,6 @@ class LocationScoutFragment : Fragment(){
         )
         application = requireNotNull(this.activity).application
         viewModelFactory = LocationScoutViewModelFactory(application)
-        Log.i("LocationScoutViewModel","called viewmodel providers.!")
-
-
-//        GpsUtils(application).turnGPSOn(object : GpsUtils.OnGpsListener {
-//
-//            override fun gpsStatus(isGPSEnable: Boolean) {
-//                this@LocationScoutFragment.isGPSEnabled = isGPSEnable
-//            }
-//        })
-
-        //for viewmodel
-//        binding.lifecycleOwner = this// for livedata
-//        viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
-//            binding.locationString.text =  getString(R.string.latLong, it.longitude, it.latitude)
-//        })
 
         invokeLocationAction()
 
@@ -85,7 +74,6 @@ class LocationScoutFragment : Fragment(){
     }
 
     private fun startLocationUpdate() {
-        Log.d("startLocationUpdate","here")
         viewModel = ViewModelProviders.of(this,viewModelFactory).get(LocationScoutViewModel::class.java)
         binding.locationScoutViewModel = viewModel
             viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
@@ -115,7 +103,6 @@ class LocationScoutFragment : Fragment(){
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             LOCATION_REQUEST -> {
-                Log.d("onRequestPermissionsResult",""+isGPSEnabled)
                 invokeLocationAction()
             }
         }

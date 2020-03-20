@@ -1,8 +1,11 @@
+/*
+ * Copyright (c) 2020. Breakpoint Software Inc.
+ */
+
 package com.breakpoint.placerackandroidapp.screens
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
 import android.location.Location
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel

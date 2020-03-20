@@ -1,2 +1,6 @@
+/*
+ * Copyright (c) 2020. Breakpoint Software Inc.
+ */
+
 rootProject.name='PlaceRackAndroidApp'
 include ':app'
