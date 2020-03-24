@@ -7,4 +7,5 @@
     <string name="enable_gps">Enable GPS</string>
     <string name="permission_request">Please give permissions to access location</string>
     <string name="latLong">Longitude: %.6f, Latitude: %.6f</string>
+    <string name="address">Address: %s</string>
 </resources>

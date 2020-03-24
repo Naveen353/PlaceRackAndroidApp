@@ -81,6 +81,10 @@ class LocationScoutFragment : Fragment(){
         viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
             binding.locationString.text =  getString(R.string.latLong, it.longitude, it.latitude)
         })
+
+        viewModel.getAddress.observe(viewLifecycleOwner, Observer {
+            binding.locationAddress.text =  getString(R.string.address,it)
+        })
     }
 
     private fun isPermissionsGranted() =
