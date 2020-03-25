@@ -6,9 +6,13 @@ package com.breakpoint.placerackandroidapp.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.app.Application
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -18,9 +22,10 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.breakpoint.placerackandroidapp.BuildConfig
 import com.breakpoint.placerackandroidapp.R
 import com.breakpoint.placerackandroidapp.databinding.LocationScoutBinding
-import com.breakpoint.placerackandroidapp.utils.GpsUtils
+import com.google.android.material.snackbar.Snackbar
 
 class LocationScoutFragment : Fragment(){
 
@@ -32,11 +37,11 @@ class LocationScoutFragment : Fragment(){
 
     private var isGPSEnabled = true
 
+    private val runningQOrLater =
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+
     private lateinit var application: Application
 
-
-
-    @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -52,30 +57,6 @@ class LocationScoutFragment : Fragment(){
         application = requireNotNull(this.activity).application
         viewModelFactory = LocationScoutViewModelFactory(application)
 
-
-
-        invokeLocationAction()
-
-
-        return binding.root
-    }
-
-    private fun invokeLocationAction() {
-        when {
-            !isGPSEnabled -> binding.locationString.text = getString(R.string.enable_gps)
-
-            isPermissionsGranted() -> startLocationUpdate()
-
-            shouldShowRequestPermissionRationale() -> binding.locationString.text = getString(R.string.permission_request)
-
-            else -> requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                LOCATION_REQUEST
-            )
-        }
-    }
-
-    private fun startLocationUpdate() {
         viewModel = ViewModelProviders.of(this,viewModelFactory).get(LocationScoutViewModel::class.java)
         binding.locationScoutViewModel = viewModel
         viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
@@ -85,35 +66,121 @@ class LocationScoutFragment : Fragment(){
         viewModel.getAddress.observe(viewLifecycleOwner, Observer {
             binding.locationAddress.text =  getString(R.string.address,it)
         })
+
+        return binding.root
     }
 
-    private fun isPermissionsGranted() =
-        ActivityCompat.checkSelfPermission(
-            application,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(
-                    application,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
+    override fun onStart() {
+        super.onStart()
+        checkPermissionsAndStartLocationUpdates()
+    }
 
-    private fun shouldShowRequestPermissionRationale() =
-        shouldShowRequestPermissionRationale(
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) && shouldShowRequestPermissionRationale(
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-
-    @SuppressLint("MissingPermission", "LongLogTag")
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            LOCATION_REQUEST -> {
-                invokeLocationAction()
-            }
+    private fun checkPermissionsAndStartLocationUpdates() {
+        if(viewModel.isLocationUpdateActive()!!)return
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            startLocationUpdate()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions()
         }
     }
 
+
+
+    private fun startLocationUpdate() {
+            viewModel.startLocationUpdates()
+    }
+
+    /*
+ *  Determines whether the app has the appropriate permissions across Android 10+ and all other
+ *  Android versions.
+ */
+    @TargetApi(29)
+    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        val foregroundLocationApproved = (
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(application,
+                            Manifest.permission.ACCESS_FINE_LOCATION))
+        val backgroundPermissionApproved =
+            if (runningQOrLater) {
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(
+                            application, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+            } else {
+                true
+            }
+        return foregroundLocationApproved && backgroundPermissionApproved
+    }
+
+    /*
+ *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
+ */
+    @TargetApi(29 )
+    private fun requestForegroundAndBackgroundLocationPermissions() {
+        if (foregroundAndBackgroundLocationPermissionApproved())
+            return
+
+        // Else request the permission
+        // this provides the result[LOCATION_PERMISSION_INDEX]
+        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+
+        val resultCode = when {
+            runningQOrLater -> {
+                // this provides the result[BACKGROUND_LOCATION_PERMISSION_INDEX]
+                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
+            }
+            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+        }
+
+        Log.d(TAG, "Request foreground only location permission")
+        requestPermissions(
+            permissionsArray,
+            resultCode
+        )
+    }
+
+    /*
+ * In all cases, we need to have the location permission.  On Android 10+ (Q) we need to have
+ * the background permission as well.
+ */
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        Log.d(TAG, "onRequestPermissionResult")
+
+        if (
+            grantResults.isEmpty() ||
+            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
+                    PackageManager.PERMISSION_DENIED))
+        {
+            // Permission denied.
+            Snackbar.make(
+                binding.locationLayout,
+                R.string.permission_denied_explanation, Snackbar.LENGTH_INDEFINITE
+            )
+                .setAction(R.string.settings) {
+                    // Displays App settings screen.
+                    startActivity(Intent().apply {
+                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    })
+                }.show()
+        } else {
+            startLocationUpdate()
+        }
+    }
 }
-const val LOCATION_REQUEST = 100
+private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
+private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
+private const val TAG = "LocationScoutFragment"
+private const val LOCATION_PERMISSION_INDEX = 0
+private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
+private const val LOCATION_REQUEST = 100
 const val GPS_REQUEST = 101
