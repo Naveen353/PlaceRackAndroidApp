@@ -7,8 +7,11 @@ package com.breakpoint.placerackandroidapp.screens
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
@@ -25,6 +28,11 @@ import androidx.lifecycle.ViewModelProviders
 import com.breakpoint.placerackandroidapp.BuildConfig
 import com.breakpoint.placerackandroidapp.R
 import com.breakpoint.placerackandroidapp.databinding.LocationScoutBinding
+import com.breakpoint.placerackandroidapp.utils.GpsUtils
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.material.snackbar.Snackbar
 
 class LocationScoutFragment : Fragment(){
@@ -78,7 +86,7 @@ class LocationScoutFragment : Fragment(){
     private fun checkPermissionsAndStartLocationUpdates() {
         if(viewModel.isLocationUpdateActive()!!)return
         if (foregroundAndBackgroundLocationPermissionApproved()) {
-            startLocationUpdate()
+            checkDeviceLocationSettingsAndStartLocationUpdates()
         } else {
             requestForegroundAndBackgroundLocationPermissions()
         }
@@ -87,7 +95,7 @@ class LocationScoutFragment : Fragment(){
 
 
     private fun startLocationUpdate() {
-            viewModel.startLocationUpdates()
+        viewModel.startLocationUpdates()
     }
 
     /*
@@ -172,7 +180,60 @@ class LocationScoutFragment : Fragment(){
                     })
                 }.show()
         } else {
-            startLocationUpdate()
+            checkDeviceLocationSettingsAndStartLocationUpdates()
+        }
+    }
+
+    /*
+ *  When we get the result from asking the user to turn on device location, we call
+ *  checkDeviceLocationSettingsAndStartGeofence again to make sure it's actually on, but
+ *  we don't resolve the check to keep the user from seeing an endless loop.
+ */
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+            // We don't rely on the result code, but just check the location setting again
+            checkDeviceLocationSettingsAndStartLocationUpdates(false)
+        }
+    }
+    /*
+ *  Uses the Location Client to check the current state of location settings, and gives the user
+ *  the opportunity to turn on location services within our app.
+ */
+    private fun checkDeviceLocationSettingsAndStartLocationUpdates(resolve:Boolean = true) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+
+        val settingsClient = LocationServices.getSettingsClient(application)
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(builder.build())
+
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve){
+                // Location settings are not satisfied, but this can be fixed
+                // by showing the user a dialog.
+                try {
+                    // Show the dialog by calling startResolutionForResult(),
+                    // and check the result in onActivityResult().
+                    startIntentSenderForResult(exception.resolution.intentSender, REQUEST_TURN_DEVICE_LOCATION_ON, null, 0, 0, 0, null);
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    binding.locationLayout,
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSettingsAndStartLocationUpdates()
+                }.show()
+            }
+        }
+        locationSettingsResponseTask.addOnCompleteListener {
+            if ( it.isSuccessful ) {
+                startLocationUpdate()
+            }
         }
     }
 }

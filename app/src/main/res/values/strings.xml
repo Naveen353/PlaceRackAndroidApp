@@ -19,4 +19,6 @@
     <string
         name="location_setting_off">Please turn on device location in Settings and try again.
     </string>
+
+    <string name="location_required_error">Location services must be enabled.</string>
 </resources>

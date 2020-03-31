@@ -49,6 +49,7 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
     init {
         Log.i("LocationScoutViewModel","LocationScoutViewModel created")
         _locationUpdateIsActive.value = false
+        initLocationCallback()
     }
 
     private fun getLastKnownLocation(){
@@ -77,7 +78,6 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
     override fun startLocationUpdates() {
         _locationUpdateIsActive.value = true
         getLastKnownLocation()
-        initLocationCallback()
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
@@ -95,7 +95,7 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
 
     fun isLocationUpdateActive() = _locationUpdateIsActive.value
 
-        override fun onCleared() {
+    override fun onCleared() {
         super.onCleared()
         _locationUpdateIsActive.value = false
         Log.i("LocationScoutViewModel","LocationScoutViewModel destroyed")
