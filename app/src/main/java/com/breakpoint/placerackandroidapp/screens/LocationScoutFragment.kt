@@ -5,11 +5,8 @@
 package com.breakpoint.placerackandroidapp.screens
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
@@ -20,7 +17,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -28,7 +24,6 @@ import androidx.lifecycle.ViewModelProviders
 import com.breakpoint.placerackandroidapp.BuildConfig
 import com.breakpoint.placerackandroidapp.R
 import com.breakpoint.placerackandroidapp.databinding.LocationScoutBinding
-import com.breakpoint.placerackandroidapp.utils.GpsUtils
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -42,8 +37,6 @@ class LocationScoutFragment : Fragment(){
     private lateinit var viewModel: LocationScoutViewModel
 
     private lateinit var viewModelFactory: LocationScoutViewModelFactory
-
-    private var isGPSEnabled = true
 
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
@@ -67,6 +60,7 @@ class LocationScoutFragment : Fragment(){
 
         viewModel = ViewModelProviders.of(this,viewModelFactory).get(LocationScoutViewModel::class.java)
         binding.locationScoutViewModel = viewModel
+
         viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
             binding.locationString.text =  getString(R.string.latLong, it.longitude, it.latitude)
         })
@@ -78,6 +72,10 @@ class LocationScoutFragment : Fragment(){
         return binding.root
     }
 
+    private fun updateLabelWithLocation() {
+        viewModel.startLocationUpdates()
+    }
+
     override fun onStart() {
         super.onStart()
         checkPermissionsAndStartLocationUpdates()
@@ -85,39 +83,11 @@ class LocationScoutFragment : Fragment(){
 
     private fun checkPermissionsAndStartLocationUpdates() {
         if(viewModel.isLocationUpdateActive()!!)return
-        if (foregroundAndBackgroundLocationPermissionApproved()) {
+        if (LocationScoutHelper(application).foregroundAndBackgroundLocationPermissionApproved()) {
             checkDeviceLocationSettingsAndStartLocationUpdates()
         } else {
             requestForegroundAndBackgroundLocationPermissions()
         }
-    }
-
-
-
-    private fun startLocationUpdate() {
-        viewModel.startLocationUpdates()
-    }
-
-    /*
- *  Determines whether the app has the appropriate permissions across Android 10+ and all other
- *  Android versions.
- */
-    @TargetApi(29)
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(application,
-                            Manifest.permission.ACCESS_FINE_LOCATION))
-        val backgroundPermissionApproved =
-            if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            application, Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                true
-            }
-        return foregroundLocationApproved && backgroundPermissionApproved
     }
 
     /*
@@ -125,7 +95,7 @@ class LocationScoutFragment : Fragment(){
  */
     @TargetApi(29 )
     private fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved())
+        if (LocationScoutHelper(application).foregroundAndBackgroundLocationPermissionApproved())
             return
 
         // Else request the permission
@@ -232,16 +202,16 @@ class LocationScoutFragment : Fragment(){
         }
         locationSettingsResponseTask.addOnCompleteListener {
             if ( it.isSuccessful ) {
-                startLocationUpdate()
+                updateLabelWithLocation()
             }
         }
     }
 }
-private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
-private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
-private const val TAG = "LocationScoutFragment"
-private const val LOCATION_PERMISSION_INDEX = 0
-private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
+ const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
+ const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+ const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
+ const val TAG = "LocationScoutFragment"
+ const val LOCATION_PERMISSION_INDEX = 0
+ const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
 private const val LOCATION_REQUEST = 100
 const val GPS_REQUEST = 101

@@ -91,6 +91,9 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
             latitude = location.latitude
         )
         _getAddress.value = getAddress(getApplication(),location.latitude,location.longitude)
+        if(_getAddress.value == null){
+            _getAddress.value = "Unable to Fetch Address"
+        }
     }
 
     fun isLocationUpdateActive() = _locationUpdateIsActive.value
