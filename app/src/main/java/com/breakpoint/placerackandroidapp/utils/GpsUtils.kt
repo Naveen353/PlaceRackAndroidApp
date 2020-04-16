@@ -10,9 +10,9 @@ import android.content.Context
 import android.content.IntentSender
 import android.location.LocationManager
 import android.util.Log
-import android.widget.Toast
-import com.breakpoint.placerackandroidapp.screens.GPS_REQUEST
+import androidx.core.app.ActivityCompat.startIntentSenderForResult
 import com.breakpoint.placerackandroidapp.screens.LocationScoutViewModel
+import com.breakpoint.placerackandroidapp.locationScout.REQUEST_TURN_DEVICE_LOCATION_ON
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationServices
@@ -20,7 +20,7 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsStatusCodes
 import com.google.android.gms.location.SettingsClient
 
-class GpsUtils(private val context: Context) {
+class GpsUtils(private val context: Context, private val activity: Activity) {
 
     private val settingsClient: SettingsClient = LocationServices.getSettingsClient(context)
     private val locationSettingsRequest: LocationSettingsRequest?
@@ -52,17 +52,22 @@ class GpsUtils(private val context: Context) {
                                 // Show the dialog by calling startResolutionForResult(), and check the
                                 // result in onActivityResult().
                                 val rae = e as ResolvableApiException
-                                rae.startResolutionForResult(context, GPS_REQUEST)
+                                //rae.startResolutionForResult(context, GPS_REQUEST)
+
+
+                                startIntentSenderForResult(context,rae.resolution.intentSender,
+                                    REQUEST_TURN_DEVICE_LOCATION_ON, null, 0, 0, 0, null);
+
                             } catch (sie: IntentSender.SendIntentException) {
                                 Log.i(ContentValues.TAG, "PendingIntent unable to execute request.")
                             }
 
                         LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE -> {
-                            val errorMessage =
-                                "Location settings are inadequate, and cannot be " + "fixed here. Fix in Settings."
-                            Log.e(ContentValues.TAG, errorMessage)
-
-                            Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+//                            val errorMessage =
+//                                "Location settings are inadequate, and cannot be " + "fixed here. Fix in Settings."
+//                            Log.e(ContentValues.TAG, errorMessage)
+//
+//                            Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                         }
                     }
                 }

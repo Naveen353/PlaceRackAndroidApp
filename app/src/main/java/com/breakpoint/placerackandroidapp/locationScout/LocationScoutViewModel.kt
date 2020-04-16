@@ -11,16 +11,21 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.breakpoint.placerackandroidapp.locationScout.LocationInterface
+import com.breakpoint.placerackandroidapp.locationScout.LocationModel
+import com.breakpoint.placerackandroidapp.connectionScout.Network
+import com.breakpoint.placerackandroidapp.connectionScout.Repository
 import com.google.android.gms.location.*
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.util.*
 
 
-class LocationScoutViewModel(application: Application) : AndroidViewModel(application),LocationInterface{
+class LocationScoutViewModel(application: Application) : AndroidViewModel(application),
+    LocationInterface {
 
     companion object {
         val locationRequest: LocationRequest = LocationRequest.create().apply {
@@ -34,6 +39,10 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
 
     private lateinit var locationCallback: LocationCallback
 
+    private val viewModelJob = SupervisorJob()
+
+    private val viewModelScope = CoroutineScope(viewModelJob + Dispatchers.Main)
+
     private val _getLatLng = MutableLiveData<LocationModel>()
     val getLatLng: LiveData<LocationModel>
         get() = _getLatLng
@@ -46,10 +55,16 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
     val locationUpdateIsActive : LiveData<Boolean>
         get() = _locationUpdateIsActive
 
+    private val repository = Repository()
+
     init {
         Log.i("LocationScoutViewModel","LocationScoutViewModel created")
         _locationUpdateIsActive.value = false
         initLocationCallback()
+
+        viewModelScope.launch {
+            repository.getFromURL()
+        }
     }
 
     private fun getLastKnownLocation(){
@@ -86,10 +101,11 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
     }
 
     override fun setLocationData(location: Location) {
-        _getLatLng.value = LocationModel(
-            longitude = location.longitude,
-            latitude = location.latitude
-        )
+        _getLatLng.value =
+            LocationModel(
+                longitude = location.longitude,
+                latitude = location.latitude
+            )
         _getAddress.value = getAddress(getApplication(),location.latitude,location.longitude)
         if(_getAddress.value == null){
             _getAddress.value = "Unable to Fetch Address"
@@ -119,4 +135,8 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
             null
         }
     }
+
+
+
+
 }

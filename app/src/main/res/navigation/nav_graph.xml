@@ -9,6 +9,6 @@
 
     <fragment
         android:id="@+id/locationScoutFragment"
-        android:name="com.breakpoint.placerackandroidapp.screens.LocationScoutFragment"
+        android:name="com.breakpoint.placerackandroidapp.locationScout.LocationScoutFragment"
         android:label="LocationScoutFragment" />
 </navigation>

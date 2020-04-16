@@ -2,9 +2,15 @@
  * Copyright (c) 2020. Breakpoint Software Inc.
  */
 
+repositories {
+    maven {
+        url 'http://oss.sonatype.org/content/repositories/snapshots'
+    }
+}
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion 29
@@ -30,7 +36,6 @@ android {
     dataBinding {
         enabled = true
     }
-
 }
 
 dependencies {
@@ -46,13 +51,28 @@ dependencies {
     testImplementation 'androidx.test.ext:junit-ktx:1.1.1'
     testImplementation 'androidx.arch.core:core-testing:2.0.0'
 
-
-
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation "android.arch.navigation:navigation-fragment-ktx:1.0.0"
     implementation "android.arch.navigation:navigation-ui-ktx:1.0.0"
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'com.google.android.gms:play-services-location:17.0.0'
+
+    // Coroutines for getting off the UI thread
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version_kotlin_coroutines"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$version_kotlin_coroutines"
+
+    // Retrofit for networking
+    implementation "com.squareup.retrofit2:retrofit:$version_retrofit"
+    implementation "com.squareup.retrofit2:converter-moshi:$version_retrofit"
+    implementation "com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:$version_retrofit_coroutines_adapter"
+    implementation "com.squareup.okhttp3:logging-interceptor:$rootProject.retrofitLoggerVersion"
+
+    // Xml Converter Factory
+    implementation "com.tickaroo.tikxml:annotation:0.8.13"
+    implementation "com.tickaroo.tikxml:core:0.8.13"
+    kapt "com.tickaroo.tikxml:processor:0.8.13"
+    implementation "com.tickaroo.tikxml:retrofit-converter:0.8.13"
+
 }

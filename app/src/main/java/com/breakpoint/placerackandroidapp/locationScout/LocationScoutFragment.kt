@@ -2,7 +2,7 @@
  * Copyright (c) 2020. Breakpoint Software Inc.
  */
 
-package com.breakpoint.placerackandroidapp.screens
+package com.breakpoint.placerackandroidapp.locationScout
 
 import android.Manifest
 import android.annotation.TargetApi
@@ -24,6 +24,7 @@ import androidx.lifecycle.ViewModelProviders
 import com.breakpoint.placerackandroidapp.BuildConfig
 import com.breakpoint.placerackandroidapp.R
 import com.breakpoint.placerackandroidapp.databinding.LocationScoutBinding
+import com.breakpoint.placerackandroidapp.screens.LocationScoutViewModel
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -56,15 +57,20 @@ class LocationScoutFragment : Fragment(){
         false
         )
         application = requireNotNull(this.activity).application
-        viewModelFactory = LocationScoutViewModelFactory(application)
+        viewModelFactory =
+            LocationScoutViewModelFactory(
+                application
+            )
 
         viewModel = ViewModelProviders.of(this,viewModelFactory).get(LocationScoutViewModel::class.java)
         binding.locationScoutViewModel = viewModel
 
+        //Updates Lat Lng to UI
         viewModel.getLatLng.observe(viewLifecycleOwner, Observer {
             binding.locationString.text =  getString(R.string.latLong, it.longitude, it.latitude)
         })
 
+        //Updates Address to UI
         viewModel.getAddress.observe(viewLifecycleOwner, Observer {
             binding.locationAddress.text =  getString(R.string.address,it)
         })
@@ -76,6 +82,10 @@ class LocationScoutFragment : Fragment(){
         viewModel.startLocationUpdates()
     }
 
+    private fun updateTextFieldWithLocation(){
+        // updateLabelWithLocation updates LatLng and corresponding address to the Views.
+    }
+
     override fun onStart() {
         super.onStart()
         checkPermissionsAndStartLocationUpdates()
@@ -83,7 +93,9 @@ class LocationScoutFragment : Fragment(){
 
     private fun checkPermissionsAndStartLocationUpdates() {
         if(viewModel.isLocationUpdateActive()!!)return
-        if (LocationScoutHelper(application).foregroundAndBackgroundLocationPermissionApproved()) {
+        if (LocationScoutHelper(
+                application
+            ).foregroundAndBackgroundLocationPermissionApproved()) {
             checkDeviceLocationSettingsAndStartLocationUpdates()
         } else {
             requestForegroundAndBackgroundLocationPermissions()
@@ -95,7 +107,9 @@ class LocationScoutFragment : Fragment(){
  */
     @TargetApi(29 )
     private fun requestForegroundAndBackgroundLocationPermissions() {
-        if (LocationScoutHelper(application).foregroundAndBackgroundLocationPermissionApproved())
+        if (LocationScoutHelper(
+                application
+            ).foregroundAndBackgroundLocationPermissionApproved())
             return
 
         // Else request the permission
@@ -187,7 +201,8 @@ class LocationScoutFragment : Fragment(){
                 try {
                     // Show the dialog by calling startResolutionForResult(),
                     // and check the result in onActivityResult().
-                    startIntentSenderForResult(exception.resolution.intentSender, REQUEST_TURN_DEVICE_LOCATION_ON, null, 0, 0, 0, null);
+                    startIntentSenderForResult(exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON, null, 0, 0, 0, null);
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
