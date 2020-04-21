@@ -5,14 +5,11 @@
 package com.breakpoint.placerackandroidapp.connectionScout
 
 import com.breakpoint.placerackandroidapp.BuildConfig
-import com.breakpoint.placerackandroidapp.network.Book
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
-import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory
-import kotlinx.coroutines.Deferred
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-
+import retrofit2.converter.simplexml.SimpleXmlConverterFactory
 
 /**
  * A retrofit service to fetch a devbyte playlist.
@@ -35,10 +32,10 @@ object Network{
     }
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("http://www.placerack.com:8080/")
-        .addConverterFactory(TikXmlConverterFactory.create())
+        .baseUrl("https://www.placerack.com:8443/")
+        .addConverterFactory(SimpleXmlConverterFactory.create())
         .client(httpClient.build())
-  //      .addCallAdapterFactory(CoroutineCallAdapterFactory())
+        .addCallAdapterFactory(CoroutineCallAdapterFactory())
         .build()
 
     val devbytes = retrofit.create(

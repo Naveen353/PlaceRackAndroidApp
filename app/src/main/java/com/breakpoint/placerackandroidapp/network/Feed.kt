@@ -11,9 +11,9 @@ data class Feed (
     //@Attribute val id : Int,
     @PropertyElement
     @Path("channel")
-    val title : String,
+    val title : String
 
-    @Path("item")
-    @Element
-    val articleList : List<Article>
+//    @Path("item")
+//    @Element
+//    val articleList : List<Article>
 )

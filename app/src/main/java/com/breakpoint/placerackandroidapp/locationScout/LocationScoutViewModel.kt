@@ -55,16 +55,12 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
     val locationUpdateIsActive : LiveData<Boolean>
         get() = _locationUpdateIsActive
 
-    private val repository = Repository()
+    private val repository = Repository(application)
 
     init {
         Log.i("LocationScoutViewModel","LocationScoutViewModel created")
         _locationUpdateIsActive.value = false
         initLocationCallback()
-
-        viewModelScope.launch {
-            repository.getFromURL()
-        }
     }
 
     private fun getLastKnownLocation(){
@@ -110,16 +106,13 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
         if(_getAddress.value == null){
             _getAddress.value = "Unable to Fetch Address"
         }
+
+        getPlacesFromUrl()
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+
     }
 
     fun isLocationUpdateActive() = _locationUpdateIsActive.value
-
-    override fun onCleared() {
-        super.onCleared()
-        _locationUpdateIsActive.value = false
-        Log.i("LocationScoutViewModel","LocationScoutViewModel destroyed")
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-    }
 
     fun getAddress(context: Context?, lat: Double, lng: Double): String? {
         val geocoder = Geocoder(context, Locale.getDefault())
@@ -136,7 +129,24 @@ class LocationScoutViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
+    private fun getPlacesFromUrl(){
+        viewModelScope.launch {
+            _getLatLng.value?.longitude?.let {
+                _getLatLng.value?.latitude?.let { it1 ->
+                    repository.getFromURL(
+                        it1,
+                        it
+                    )
+                }
+            }
+        }
+    }
 
-
+    override fun onCleared() {
+        super.onCleared()
+        _locationUpdateIsActive.value = false
+        Log.i("LocationScoutViewModel","LocationScoutViewModel destroyed")
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
 
 }

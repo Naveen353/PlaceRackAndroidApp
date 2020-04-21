@@ -20,7 +20,7 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.breakpoint.placerackandroidapp.BuildConfig
 import com.breakpoint.placerackandroidapp.R
 import com.breakpoint.placerackandroidapp.databinding.LocationScoutBinding
@@ -62,7 +62,7 @@ class LocationScoutFragment : Fragment(){
                 application
             )
 
-        viewModel = ViewModelProviders.of(this,viewModelFactory).get(LocationScoutViewModel::class.java)
+        viewModel = ViewModelProvider(this,viewModelFactory).get(LocationScoutViewModel::class.java)
         binding.locationScoutViewModel = viewModel
 
         //Updates Lat Lng to UI

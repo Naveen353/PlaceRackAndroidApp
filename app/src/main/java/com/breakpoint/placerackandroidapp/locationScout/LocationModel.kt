@@ -6,5 +6,5 @@ package com.breakpoint.placerackandroidapp.locationScout
 
 data class LocationModel(
     val longitude: Double,
-    var latitude: Double
+    val latitude: Double
 )

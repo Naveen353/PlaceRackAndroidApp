@@ -69,7 +69,11 @@ dependencies {
     implementation "com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:$version_retrofit_coroutines_adapter"
     implementation "com.squareup.okhttp3:logging-interceptor:$rootProject.retrofitLoggerVersion"
 
+
     // Xml Converter Factory
+
+    implementation "com.squareup.retrofit2:converter-simplexml:$version_retrofit"
+
     implementation "com.tickaroo.tikxml:annotation:0.8.13"
     implementation "com.tickaroo.tikxml:core:0.8.13"
     kapt "com.tickaroo.tikxml:processor:0.8.13"

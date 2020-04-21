@@ -9,7 +9,7 @@ import com.tickaroo.tikxml.annotation.PropertyElement
 import com.tickaroo.tikxml.annotation.Xml
 
 @Xml(name="item")
-data class Article (
+data class Article1 (
     //@Attribute val id : Int,
     @PropertyElement val title : String,
     @PropertyElement val link : String,
